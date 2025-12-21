@@ -22,13 +22,10 @@ RUN bun install
 # Copy the rest of the application
 COPY . .
 
-# Copy the .env file created by the workflow
-COPY .env .env
-
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 
 # Build the Next.js application
-RUN pnpm build
+RUN bun run build
 
 # Copy NGINX configuration
 RUN mkdir -p /etc/nginx/sites-available \
