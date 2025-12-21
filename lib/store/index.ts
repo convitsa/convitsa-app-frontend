@@ -22,7 +22,7 @@ export const makeStore = () => {
           ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
         },
       }).concat(baseApi.middleware),
-    devTools: process.env.NODE_ENV !== 'production',
+    devTools: process.env.NEXT_PUBLIC_ENV !== 'production',
   });
 
   // Enable refetchOnFocus/refetchOnReconnect
