@@ -13,7 +13,7 @@ WORKDIR /app
 # Copy only package manifests first to take advantage of cached dependency installation
 COPY package.json bun.lock ./
 
-COPY .env .env
+
 
 # Install pnpm using corepack
 # Install bun
