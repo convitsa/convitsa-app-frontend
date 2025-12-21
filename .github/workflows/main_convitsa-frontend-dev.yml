@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
 
 env:
-  ACR_NAME: "convitsaacrdev"             # your ACR (no .azurecr.io)
-  RESOURCE_GROUP: "Convitsa-Development" # your resource group
-  APP_NAME: "convitsa-frontend-dev"      # your App Service name
+  ACR_NAME: "convitsaacrdev"
+  RESOURCE_GROUP: "Convitsa-Development"
+  APP_NAME: "convitsa-frontend-dev"
   ENVIRONMENT: "development"
 
 jobs:
@@ -24,74 +24,41 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Login to Azure using service principal stored in AZURE_CREDENTIALS
       - name: Azure Login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Login to your ACR (convitsaacrdev.azurecr.io)
       - name: ACR Login
         run: az acr login --name ${{ env.ACR_NAME }}
 
-      # Install Bun
-      - name: Install Bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          export BUN_INSTALL="$HOME/.bun"
-          export PATH="$BUN_INSTALL/bin:$PATH"
-          bun --version
-
-      # Install dependencies
-      - name: Bun Install
-        run: |
-          export BUN_INSTALL="$HOME/.bun"
-          export PATH="$BUN_INSTALL/bin:$PATH"
-          bun install
-
-      # Build frontend
-      - name: Bun Build
-        run: |
-          export BUN_INSTALL="$HOME/.bun"
-          export PATH="$BUN_INSTALL/bin:$PATH"
-          bun run build
-
-      # Optional: create .env to be copied into the image (if your Dockerfile uses it)
+      # Create .env used in Docker build
       - name: Create .env file
         run: |
           echo "Creating .env file..."
           > .env
-          echo '${{ toJSON(secrets) }}' > temp_secrets.json
-          echo '${{ toJSON(vars) }}' > temp_vars.json
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env
+          echo "NODE_ENV=production" >> .env
+          # add more keys as needed:
+          # echo "ANOTHER_KEY=${{ secrets.ANOTHER_KEY }}" >> .env
 
-          for key in $(jq -r 'keys[]' temp_secrets.json); do
-            value=$(jq -r --arg k "$key" '.[$k]' temp_secrets.json)
-            [ "$value" != "null" ] && echo "$key=$value" >> .env
-          done
-
-          for key in $(jq -r 'keys[]' temp_vars.json); do
-            value=$(jq -r --arg k "$key" '.[$k]' temp_vars.json)
-            [ "$value" != "null" ] && echo "$key=$value" >> .env
-          done
-
-          rm -f temp_secrets.json temp_vars.json
+          echo "Generated .env:"
           cat .env
+          ls -la
 
-      # Define image tag for ACR
       - name: Define image tag
         id: names
         run: |
           echo "image_tag=${{ env.ACR_NAME }}.azurecr.io/convitsa-frontend:${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
-      # Build Docker image (make sure your Dockerfile matches this layout)
       - name: Build Docker Image
         run: |
+          ls -la   # verify Dockerfile and .env are here
           docker build \
             --build-arg ENVIRONMENT="${{ env.ENVIRONMENT }}" \
             -t ${{ steps.names.outputs.image_tag }} \
             -f Dockerfile .
 
-      # Push Docker image to ACR (sha tag + latest)
       - name: Push Docker Image
         run: |
           docker push ${{ steps.names.outputs.image_tag }}
@@ -99,7 +66,6 @@ jobs:
           docker tag ${{ steps.names.outputs.image_tag }} "$LATEST_TAG"
           docker push "$LATEST_TAG"
 
-      # Deploy the container image to Azure Web App
       - name: Deploy to Azure Web App (container)
         uses: azure/webapps-deploy@v2
         with:
