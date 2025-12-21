@@ -65,13 +65,14 @@ jobs:
           done
           cat .env
 
-      - name: Prepare deployment package
+      - name: Prepare deployment packages
         run: |
-          zip -r deploy.zip . -x ".git/*"
+          mv ./build/static ./build/standalone/build
+          mv ./public ./build/standalone
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.APP_NAME }}
-          package: deploy.zip
-          startup-command: "bun run start"
+          package: ./build/standalone
+
