@@ -26,10 +26,20 @@ ENV PATH="/usr/local/bin:${PATH}"
 RUN bun install
 
 
-# Copy the rest of the application
+# Copy the rest of the application (including .env)
 COPY . .
 
+# Accept build args for environment variables
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_ENV
+
+# Set environment variables for build time
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV}
 ENV NODE_OPTIONS="--max-old-space-size=8192"
+
+# Debug: Show env vars being used
+RUN echo "Building with NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}"
 
 # Build the Next.js application
 RUN bun run build

@@ -33,10 +33,12 @@ Dockerfile*
 docker-compose*
 .dockerignore
 
-# Environment files (will be passed via docker-compose)
-.env
-.env.*
-!.env.example
+# Environment files
+# Note: .env is NOT ignored - it's needed for NEXT_PUBLIC_* vars at build time
+.env.local
+.env.development
+.env.production
+!.env
 
 # Documentation
 *.md
