@@ -1,4 +1,4 @@
-name: Deploy Backend - Development
+name: Deploy Frontend - Development
 
 on:
   push:
@@ -70,3 +70,8 @@ jobs:
         with:
           app-name: ${{ env.APP_NAME }}
           package: .
+          # Include .next folder and Bun cache in deployment
+          include: |
+            .next
+            node_modules
+            .bun
