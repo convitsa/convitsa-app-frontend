@@ -14,10 +14,15 @@ WORKDIR /app
 COPY package.json bun.lock ./
 
 # Install pnpm using corepack
+# Install bun
 RUN npm install --global bun@latest
-RUN corepack enable bun
-RUN corepack use bun@latest
+
+# Ensure bun is on PATH (usually already is after npm -g)
+ENV PATH="/usr/local/bin:${PATH}"
+
+# Install dependencies with bun
 RUN bun install
+
 
 # Copy the rest of the application
 COPY . .
