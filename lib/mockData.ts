@@ -661,8 +661,8 @@ export const filterDateRanges = [
 ];
 
 // Generated Content History
-export type ContentType = 'blog' | 'landing' | 'faq' | 'product';
-export type ContentStatus = 'draft' | 'published' | 'archived';
+export type ContentType = 'blog' | 'landing' | 'faq' | 'product' | 'social' | 'email';
+export type ContentStatus = 'draft' | 'published' | 'archived' | 'generating' | 'completed' | 'failed';
 
 export interface GeneratedContent {
   id: string;
@@ -674,6 +674,7 @@ export interface GeneratedContent {
   aiModels: string[];
   wordCount: number;
   createdAt: string;
+  updatedAt?: string;
   status: ContentStatus;
   seoScore: number;
   readabilityScore: number;
@@ -684,6 +685,8 @@ export const contentTypeLabels: Record<ContentType, string> = {
   landing: 'Landing Page',
   faq: 'FAQ Section',
   product: 'Product Page',
+  social: 'Social Post',
+  email: 'Email',
 };
 
 export const mockGeneratedContent: GeneratedContent[] = [

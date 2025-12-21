@@ -275,7 +275,7 @@ function ContentGenerationModal({
                 <motion.button
                   key={type.id}
                   type="button"
-                  onClick={() => setSelectedContentType(type.id)}
+                  onClick={() => setSelectedContentType(type.id as 'blog' | 'landing' | 'faq' | 'social')}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${

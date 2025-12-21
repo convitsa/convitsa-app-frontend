@@ -4,18 +4,31 @@ import { baseApi } from './baseApi';
 
 export interface Content {
   id: string;
+  _id?: string;
   domainId: string;
   type: 'blog' | 'social' | 'landing' | 'faq' | 'email';
+  contentType?: 'blog' | 'social' | 'landing' | 'faq' | 'email';
   title: string;
   content: string;
   keyword: string;
   instructions?: string;
-  status: 'generating' | 'completed' | 'failed';
-  metadata?: {
-    wordCount: number;
-    readingTime: number;
-    seoScore?: number;
+  status: 'generating' | 'completed' | 'failed' | 'draft' | 'published' | 'archived';
+  generatedContent?: {
+    title: string;
+    body: string;
+    meta?: {
+      description?: string;
+      keywords?: string[];
+    };
   };
+  metadata?: {
+    wordCount?: number;
+    readingTime?: number;
+    seoScore?: number;
+    readabilityScore?: number;
+  };
+  wordCount?: number;
+  aiModels?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -31,6 +44,7 @@ interface UpdateContentRequest {
   contentId: string;
   title?: string;
   content?: string;
+  status?: 'draft' | 'published' | 'archived';
 }
 
 interface ContentQueryParams {

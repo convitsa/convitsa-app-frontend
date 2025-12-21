@@ -114,7 +114,7 @@ function ContentSliderPanel({
     
     try {
       await updateContent({
-        id: content.id,
+        contentId: content.id,
         status: 'published',
       }).unwrap();
       showSuccess('Content published!');
