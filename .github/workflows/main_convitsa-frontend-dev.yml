@@ -38,7 +38,7 @@ jobs:
           echo "Creating .env file..."
           > .env
           echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env
-          echo "NODE_ENV=production" >> .env
+          echo "NODE_ENV=${{ env.ENVIRONMENT }}" >> .env
           # add more keys as needed:
           # echo "ANOTHER_KEY=${{ secrets.ANOTHER_KEY }}" >> .env
 
