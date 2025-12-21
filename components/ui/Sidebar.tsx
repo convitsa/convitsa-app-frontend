@@ -54,7 +54,7 @@ const navigation: NavItemType[] = [
     ]
   },
   { name: 'Team', href: '/team', icon: Users2 },
-  { name: 'Billing', href: '/billing', icon: CreditCard },
+  //{ name: 'Billing', href: '/billing', icon: CreditCard },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
