@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   RefreshCw,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Calendar,
   FileText,
   Link2,
@@ -374,6 +376,11 @@ export default function ActionsPage() {
   const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
   const [selectedKeywordForContent, setSelectedKeywordForContent] = useState<ContentKeyword | null>(null);
 
+  // Pagination state
+  const [keywordsPage, setKeywordsPage] = useState(1);
+  const [backlinksPage, setBacklinksPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   // Get suggested keywords based on selected group
   const { 
     data: keywordsData, 
@@ -402,6 +409,19 @@ export default function ActionsPage() {
   );
   const backlinkOpportunities = backlinksData?.data?.opportunities || [];
 
+  // Pagination calculations
+  const totalKeywordsPages = Math.ceil(suggestedKeywords.length / ITEMS_PER_PAGE);
+  const paginatedKeywords = suggestedKeywords.slice(
+    (keywordsPage - 1) * ITEMS_PER_PAGE,
+    keywordsPage * ITEMS_PER_PAGE
+  );
+
+  const totalBacklinksPages = Math.ceil(backlinkOpportunities.length / ITEMS_PER_PAGE);
+  const paginatedBacklinks = backlinkOpportunities.slice(
+    (backlinksPage - 1) * ITEMS_PER_PAGE,
+    backlinksPage * ITEMS_PER_PAGE
+  );
+
   const isRefreshing = isFetchingKeywords || isFetchingBacklinks;
 
   // Set first group as default when groups load
@@ -410,6 +430,11 @@ export default function ActionsPage() {
       setSelectedPromptGroup(promptGroups[0].name);
     }
   }, [promptGroups, selectedPromptGroup]);
+
+  // Reset keywords page when group changes
+  React.useEffect(() => {
+    setKeywordsPage(1);
+  }, [selectedPromptGroup]);
 
   const handleRefresh = () => {
     refetchGroups();
@@ -561,7 +586,7 @@ export default function ActionsPage() {
                 No keywords found. Create prompts first to get keyword suggestions.
               </div>
             ) : (
-              suggestedKeywords.map((keyword, index) => {
+              paginatedKeywords.map((keyword, index) => {
                 const isSelected = selectedKeyword === keyword.id;
                 return (
                   <motion.button
@@ -620,6 +645,34 @@ export default function ActionsPage() {
               })
             )}
           </div>
+
+          {/* Keywords Pagination */}
+          {suggestedKeywords.length > ITEMS_PER_PAGE && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+              <span className="text-sm text-gray-500">
+                Showing {((keywordsPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(keywordsPage * ITEMS_PER_PAGE, suggestedKeywords.length)} of {suggestedKeywords.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setKeywordsPage(p => Math.max(1, p - 1))}
+                  disabled={keywordsPage === 1}
+                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-sm font-medium text-gray-700">
+                  {keywordsPage} / {totalKeywordsPages}
+                </span>
+                <button
+                  onClick={() => setKeywordsPage(p => Math.min(totalKeywordsPages, p + 1))}
+                  disabled={keywordsPage === totalKeywordsPages}
+                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </Card>
       </motion.div>
 
@@ -658,7 +711,7 @@ export default function ActionsPage() {
                 No backlink opportunities found yet. Keep tracking prompts to discover sources.
               </div>
             ) : (
-              backlinkOpportunities.map((item, index) => (
+              paginatedBacklinks.map((item, index) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -669,47 +722,83 @@ export default function ActionsPage() {
                   {/* URL */}
                   <div className="col-span-5 flex items-center gap-2 min-w-0">
                     <div className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center flex-shrink-0 text-xs">
-                      {item.domain?.charAt(0)?.toUpperCase() || '?'}
+                      {(typeof item.domain === 'string' 
+                        ? item.domain 
+                        : item.domain?.name || item.domain?.url || (typeof item.url === 'string' ? item.url : item.url?.url) || ''
+                      ).charAt(0)?.toUpperCase() || '?'}
                     </div>
                     <a
-                      href={item.url.startsWith('http') ? item.url : `https://${item.url}`}
+                      href={(() => {
+                        const url = typeof item.url === 'string' ? item.url : item.url?.url || item.url?.name || '';
+                        return url.startsWith('http') ? url : `https://${url}`;
+                      })()}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-gray-700 hover:text-primary truncate flex items-center gap-1 group-hover:text-primary transition-colors"
                     >
-                      <span className="truncate">{item.url}</span>
+                      <span className="truncate">
+                        {typeof item.url === 'string' ? item.url : item.url?.url || item.url?.name || ''}
+                      </span>
                     </a>
                   </div>
 
                   {/* AI Models */}
                   <div className="col-span-2 flex items-center gap-1">
-                    {item.aiModels.map((model) => (
+                    {(Array.isArray(item.aiModels) ? item.aiModels : []).map((model) => (
                       <AIIcon key={model} name={model} size="sm" />
                     ))}
                   </div>
 
                   {/* Usage Count */}
                   <div className="col-span-2 text-center">
-                    <span className="text-sm font-medium text-gray-900">{item.usageCount}</span>
+                    <span className="text-sm font-medium text-gray-900">{item.usageCount || 0}</span>
                   </div>
 
                   {/* Last Seen */}
                   <div className="col-span-1 text-center">
                     <span className="text-sm text-gray-500">
-                      {new Date(item.lastSeen).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {item.lastSeen ? new Date(item.lastSeen).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}
                     </span>
                   </div>
 
                   {/* First Identified */}
                   <div className="col-span-2 text-center">
                     <span className="text-sm text-gray-500">
-                      {new Date(item.firstIdentified).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {item.firstIdentified ? new Date(item.firstIdentified).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}
                     </span>
                   </div>
                 </motion.div>
               ))
             )}
           </div>
+
+          {/* Backlinks Pagination */}
+          {backlinkOpportunities.length > ITEMS_PER_PAGE && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+              <span className="text-sm text-gray-500">
+                Showing {((backlinksPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(backlinksPage * ITEMS_PER_PAGE, backlinkOpportunities.length)} of {backlinkOpportunities.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setBacklinksPage(p => Math.max(1, p - 1))}
+                  disabled={backlinksPage === 1}
+                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-sm font-medium text-gray-700">
+                  {backlinksPage} / {totalBacklinksPages}
+                </span>
+                <button
+                  onClick={() => setBacklinksPage(p => Math.min(totalBacklinksPages, p + 1))}
+                  disabled={backlinksPage === totalBacklinksPages}
+                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </Card>
       </motion.div>
 
